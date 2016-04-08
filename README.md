@@ -23,7 +23,7 @@ The custom version of CoDExtended communicates with the server through a cvar. O
 * Modders can add or edit more commands in *.pk3/_cmds.gsc
 * Partial Name Matching is much faster way to execute id-required commands
 
-# Instructions:
+# Instructions
 1. Install Indy's Custom CodExtended -> File Provided in CoDExtended Folder -> Usage: https://github.com/iindy/CoDExtended#usage
 1. Put *.pk3 in main
 2. Open Codam\modlist.gsc and register the mod:
