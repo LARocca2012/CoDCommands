@@ -36,3 +36,6 @@ The custom version of CoDExtended communicates with the server through a cvar. O
 All questions should be directed to the forum thread
 					                OR
 Contact me on Steam: http://steamcommunity.com/id/indyanz/
+
+# Credits
+Credit to php (http://cod1.eu) for the original CoDExtended and cheese (Steam: thecheeseman999) for his admin commands ;)
