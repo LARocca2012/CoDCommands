@@ -1,7 +1,9 @@
-# Indy Chat Commands
-Chat Commands for Call of Duty 1 v1.1
+# CoD Chat Commands
+Chat Commands for Call of Duty 1 v1.1 by Indy
 
-How does it work? The custom version of CoDExtended communicates with the server through cvar transferring ID and Command.   
+How does it work? 
+
+The custom version of CoDExtended communicates with the server through a cvar. On say, a command will be triggered and hidden from other players if chat message begins with !.
 
 # List of Commands
 
