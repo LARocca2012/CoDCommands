@@ -9,8 +9,8 @@ The custom version of CoDExtended communicates with the server through a cvar. O
 
 - !login : Access admin commands
 - !help : List of commands
-- !status" : Print players info
-- !say" : Talk as console
+- !status : Print players info
+- !say : Talk as console
 - !shout : Shout a message
 - !rename : Rename player
 - !kill : Kill player
