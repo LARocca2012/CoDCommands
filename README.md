@@ -9,7 +9,7 @@ The custom version of CoDExtended communicates with the server through a callbac
 
 Update v2.0
 - Permissions
-- Groups
+- Groups ( Guest, VIP, Moderator, Admin, God )
 - New Commands ( aliases, player mute, private messagin, poke, change map... and plenty more )
 - Updated CoDExtended ( Stable v20 )
 - Suffixes-> groups get suffixes at end of their message
