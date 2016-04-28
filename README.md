@@ -5,6 +5,16 @@ How does it work?
 
 The custom version of CoDExtended communicates with the server through a callback. On say, a command will be triggered and hidden from other players if chat message begins with !.
 
+# Updates
+
+Update v2.0
+- Permissions
+- Groups
+- New Commands ( aliases, player mute, private messagin, poke, change map... and plenty more )
+- Updated CoDExtended ( Stable v20 )
+- Suffixes-> groups get suffixes at end of their message
+- Bug fixes and other random stuff
+
 # List of Commands
 
 Guest Commands
