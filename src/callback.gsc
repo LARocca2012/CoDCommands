@@ -97,7 +97,7 @@ CodeCallback_PlayerCommand(cmd) {
         
         tok = combineChatCommand ( chatcmd, " ", id );
         command = chatcmd[ 0 ];
-        printconsole("\ncommand arg is:" + command + "tok is: " + tok + "\n"); 
+        //printconsole("\ncommand arg is:" + command + "tok is: " + tok + "\n"); 
         self [[ level.chatcommand[ command ].call ]]( tok );
         self.lastexecutetime = gettime();
     }
@@ -174,20 +174,20 @@ getByAnyMeans( tok ) {
         return undefined;
     }
     
-    printconsole("\ncleaned string:" + name + "\n");
+    //printconsole("\ncleaned string:" + name + "\n");
     found = [];
     players = getEntArray( "player", "classname" );
     for ( i = 0; i < players.size; i++ ) {
         player = players[ i ];
         if ( isDefined( player.name ) ) {
             playerName =  clean_string( player.name );
-            printconsole("\ncleaned pstring:" + playerName + "\n");
+            //printconsole("\ncleaned pstring:" + playerName + "\n");
             if ( contains( playerName, name ) ) {
                 found [ found.size ] = player;
             }
         }
     }
-    printconsole("\nfound.size is " + found.size + "\n");
+    //printconsole("\nfound.size is " + found.size + "\n");
     if ( found.size < 1 ) {
         self playerMsg( "No players found with: " + name );
         return undefined;
@@ -204,7 +204,7 @@ getByAnyMeans( tok ) {
     }
     
     if ( found.size > 0 && isDefined( found[ 0 ] ) ) {
-        printconsole("\nfound player with id: " + found[0] getentitynumber() + "\n");
+        //printconsole("\nfound player with id: " + found[0] getentitynumber() + "\n");
         id = found[ 0 ] getEntityNumber();
         return id;
     } 
