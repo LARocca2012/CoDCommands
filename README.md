@@ -6,6 +6,12 @@ How does it work?
 The custom version of CoDExtended communicates with the server through a callback. On say, a command will be triggered and hidden from other players if chat message begins with !.
 
 # Updates
+Update v2.1:
+- Added !suffix <reset|custom> -> Toggle ( just !suffix ) or change your suffix ( only for Admins+ )
+- Fixed major crash with CoDExtended
+- Logins save over rounds, maps, and reconnects! 
+- Better handling of missing passwords -> it will still hide messages starting with ! for password protection and security measures
+- Other bug fixes
 
 Update v2.0
 - Permissions

@@ -54,7 +54,7 @@ main() {
         self.pers["muted"] = 0;
     if ( !isDefined( self.pers["permissions"] ) )
         self.pers["permissions"] = 0;
-    
+    printconsole("i have been summoned\n");
     ips = Array( level.permission_ips );
 
     for ( i = 1; i < ips.size; i++ ) {

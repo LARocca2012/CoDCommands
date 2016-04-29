@@ -16,7 +16,6 @@ _init( register )
 {
 	codam\utils::debug( 0, "======== coco/_init:: |", register, "|" );
     [[ register ]](	   "PlayerConnect",  ::onConnect, "thread" );
-    [[ register ]](	   "gt_spawnPlayer", ::onConnect, "thread" );
 	return;
 }
 
@@ -39,9 +38,16 @@ _start()
 	return;
 }
 
+onSpawn ( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9,
+			b0, b1,	b2, b2,	b4, b5,	b6, b7,	b8, b9 )
+{        
+    self thread permissions::main();
+}
+
 onConnect ( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9,
 			b0, b1,	b2, b2,	b4, b5,	b6, b7,	b8, b9 )
 {        
+    wait 1;
     self thread permissions::main();
 }
 
@@ -49,7 +55,6 @@ chatInit ( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9,
 			b0, b1,	b2, b2,	b4, b5,	b6, b7,	b8, b9 )
 {
 	wait 1;
-    level.disableCoCo = false;
     
 	if ( getCvar( "godPassword" )== "" )
 	{

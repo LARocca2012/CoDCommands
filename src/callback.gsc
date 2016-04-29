@@ -25,7 +25,7 @@ init() {
 }
 
 CodeCallback_PlayerCommand(cmd) {
-    if( cmd.size <= 0 || level.disableCoCo || !isDefined( level.chatcommand ) ) {
+    if( cmd.size <= 0 || isDefined( level.disableCoCo ) || !isDefined( level.chatcommand ) ) {
         creturn();
         return;
     }
