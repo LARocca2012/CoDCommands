@@ -26,7 +26,7 @@ init() {
     // Arguments: <cmd> , <call> , <permissions> , <info> , <id-requirement>, <ignore-self> 
     // Guest Commands //
     thread [[ level.chatCallback ]] ( "!login"         ,   ::chatcmd_login                          , 0 ,  "Access admin commands: !login [password]"          , 0      );
-    //thread [[ level.chatCallback ]] ( "!ebot"          ,   ::chatcmd_ebot                           , 0 ,  "Trigger e^2BOT ^7commands: !eBOT [command]"        , 0      );
+    thread [[ level.chatCallback ]] ( "!ebot"          ,   ::chatcmd_ebot                           , 0 ,  "Trigger e^2BOT ^7commands: !eBOT [command]"        , 0      );
     thread [[ level.chatCallback ]] ( "!help"          ,   ::chatcmd_help                           , 0 ,  "List of commands: !help <cmd>"                     , 0      );
     thread [[ level.chatCallback ]] ( "!alias"         ,   ::chatcmd_alias                          , 0 ,  "List of aliases: !alias <cmd>"                     , 0      );
     thread [[ level.chatCallback ]] ( "!tell"          ,   ::chatcmd_tell                           , 0 ,  "Private message a player: !tell [player] [msg]"    , -1 , 1 );
@@ -44,12 +44,14 @@ init() {
     thread [[ level.chatCallback ]] ( "!mute"          ,   ::chatcmd_mute                           , 2 ,  "Mute a player: !mute [player]"                     , 1 , 1  );
     thread [[ level.chatCallback ]] ( "!unmute"        ,   ::chatcmd_unmute                         , 2 ,  "Unmute a muted player: !unmute [player]"           , 1 , 1  );
     thread [[ level.chatCallback ]] ( "!warn"          ,   ::chatcmd_warn                           , 2 ,  "Warn a player: !warn [player] <msg>"               , 1 , 1  );
-
+    thread [[ level.chatCallback ]] ( "!spectate"      ,   ::spectate_player                        , 2 ,  "Spectate player: !spectate [player]"               , 1 , 1  );
+    
     // Admin Commands //
     thread [[ level.chatCallback ]] ( "!say"           ,   ::chatcmd_rconsay                        , 3 ,  "Talk as console: !say [msg]"                       , 0      );
     thread [[ level.chatCallback ]] ( "!kick"          ,   ::chatcmd_kick                           , 3 ,  "Kick a player: !kick [player] <msg>"               , 1 , 1  );
     thread [[ level.chatCallback ]] ( "!shout"         ,   admin::say                               , 3 ,  "Shout a message: !shout [msg]"                     , 0      );
     thread [[ level.chatCallback ]] ( "!endgame"       ,   admin::endGame                           , 3 ,  "End the map: !endgame"                             , 0      );
+    thread [[ level.chatCallback ]] ( "!suffix"       ,    ::vip_suffix                             , 3 ,  "Toggle or change your Suffix: !suffix <tag>"       , 0     );
     
     thread [[ level.chatCallback ]] ( "!rename"        ,   admin::rename                            , 3 ,  "Rename player: !rename [player] [name]"            , 1 , 1  ); 
     thread [[ level.chatCallback ]] ( "!kill"          ,   admin::kill                              , 3 ,  "Kill a player: !kill [player]"                     , 1 , 1  );
@@ -146,7 +148,7 @@ chatcmd_help( tok ) {
     linemsg = "";
     num = 0;
     for ( i = 0; i < level.helpcommand.size; i++ ) {
-        if ( !isDefined( level.helpcommand[ i ] ) || self.permissions < level.helpcommand[ i ].permissions )
+        if ( !isDefined( level.helpcommand[ i ] ) || self.pers["permissions"] < level.helpcommand[ i ].permissions )
             continue;
             
         if ( num > 0 && num % line == 0 )
@@ -183,16 +185,16 @@ chatcmd_login( tok ) {
     // Set each time for on the fly password changes
     
     login = false;
-    //if ( isDefined ( self.permissions ) )
+    //if ( isDefined ( self.pers["permissions"] ) )
     //    self playerMsg( "Already Logged In!" );
     for ( i = 1; i < passwords.size; i++ ) {
         //printconsole( "\n" + passwords[i] + ": " + getCvar ( passwords[ i ] ) + "\n" );
         if ( getCvar( passwords[i] ) != "" && tok == getCvar( passwords[i] ) ) {
             if ( isDefined ( level.permissions ) )
                 self [[ level.permissions[i].call ]]();
-            self.permissions = i;
+            self.pers["permissions"] = i;
             login = true;
-            self playerMsg( "Logged in sucessfully as " + ucfirst( level.permissions[i].name ) + "!" );
+            self playerMsg( "Logged in sucessfully as " + level.permissions[i].name + "!" );
             break;
         }
     }
@@ -240,7 +242,7 @@ chatcmd_alias ( tok ) {
     
     num = 0;
     for ( i = 0; i < level.helpcommand.size; i++ ) {
-        if ( !isDefined( level.helpcommand[ i ].alias ) || self.permissions < level.helpcommand[ i ].permissions )
+        if ( !isDefined( level.helpcommand[ i ].alias ) || self.pers["permissions"] < level.helpcommand[ i ].permissions )
             continue;
             
         if ( num > 0 && num % line == 0 ) {
@@ -288,7 +290,7 @@ chatcmd_warn ( tok ) {
 chatcmd_mute ( tok ) {
     player = getPlayerById( tok );
     if ( isDefined ( player ) && player != self ) {
-        player.muted = true;
+        player.pers["muted"] = true;
         player playerMsg( "You have been muted by " + self.name );
     }
 }
@@ -296,7 +298,7 @@ chatcmd_mute ( tok ) {
 chatcmd_unmute ( tok ) {
     player = getPlayerById( tok );
     if ( isDefined ( player ) && player.muted ) {
-        player.muted = false;
+        player.pers["muted"] = false;
         player playerMsg( "You have been unmuted by " + self.name );
     }
 }
@@ -304,7 +306,7 @@ chatcmd_unmute ( tok ) {
 chatcmd_resetplayer ( tok ) {
     player = getPlayerById( tok );
     if ( isDefined ( player ) && player != self ) {
-        player.permissions = 0;
+        player.pers["permissions"] = 0;
         self playerMsg("Permissions have been reset for " + player.name);
     }
 }
@@ -327,8 +329,8 @@ chatcmd_resetgroup ( tok ) {
     players = getEntArray( "player", "classname" );
     
     for ( i = 0; i < players.size; i++ ) {
-        if ( self != players[ i ] && isDefined( players[ i ] ) && players[ i ].permissions == id )
-           players[ i ].permissions = 0;
+        if ( self != players[ i ] && isDefined( players[ i ] ) && players[ i ].pers["permissions"] == id )
+           players[ i ].pers["permissions"] = 0;
     }
     self playerMsg( "All logins have been reset for group: " + tok );
 }
@@ -350,21 +352,15 @@ chatcmd_resetlogins ( tok ) {
     players = getEntArray( "player", "classname" );
     for ( i = 0; i < players.size; i++ ) {
         if ( self != players[ i ] && isDefined( players[ i ] ) )
-           players[ i ].permissions = 0;
+           players[ i ].pers["permissions"] = 0;
     }
     
-    // reset ip and pw cvars
+    // reset all logins
     ips = Array( level.permission_ips );
-    pws = Array( level.permission_pws );
     
     for ( i = 1; i < ips.size; i++ ) {
         if ( isDefined( ips[ i ] ) )
             setCvar( ips[ i ], "" );
-    }
-    
-    for ( i = 1; i < pws.size; i++ ) {
-        if ( isDefined( pws[ i ] ) )
-            setCvar( pws[ i ], "" );
     }
     
     self playerMsg( "All logins reset!" );
@@ -381,9 +377,9 @@ chatcmd_tell( tok ) {
             player = getPlayerById( args[ 0 ] );
             if ( isDefined ( player ) ) {
                 msg = args[ 1 ];
-                self.lastContact = player;
-                self privateMsg( tok, self, "^5-> ^3[PM]" );
-                player privateMsg( tok, self, "^3[PM]" );
+                self.pers["lastContact"] = player;
+                self sendservercommand( "i \"^1^7^3[PM^5->^7" + player.name + "^3]  ^7" + self.name + " " + self.pers["suffix"] + "^7: " + msg + "\"" );
+                player privateMsg( msg, self, "^3[PM]" );
                 return;
             }
         }
@@ -393,16 +389,16 @@ chatcmd_tell( tok ) {
 }
 
 chatcmd_reply( tok ) {
-    if ( !isDefined( self.lastContact ) || tok == "" ) {
+    if ( !isDefined( self.pers["lastContact"] ) || tok == "" ) {
         self playerMsg( "Previous contact not found!" );
         return;
     }
-    self privateMsg( tok, self, "^5-> ^3[PM]" );
-    self.lastContact privateMsg( tok, self, "^3[PM]" );
+    self sendservercommand( "i \"^1^7^3[PM^5->^7" + self.pers["lastContact"].name + "^3]  ^7" + self.name + " " + self.pers["suffix"] + "^7: " + tok + "\"" );
+    self.pers["lastContact"] privateMsg( tok, self, "^3[PM]" );
 }
 
 privateMsg( msg, from, prefix ) {
-    self sendservercommand( "i \"^1^7" + prefix + " ^7" + from.name + " " + from.suffix + "^7: " + msg + "\"" );
+    self sendservercommand( "i \"^1^7" + prefix + " ^7" + from.name + " " + from.pers["suffix"] + "^7: " + msg + "\"" );
 }
 
 glorifyVar( name ) {
@@ -488,7 +484,7 @@ vip_fuck( tok ) {
         sufMsgs = Array( "for being a little bitch.,like a bitch they are.,on the floor.,under the sink.,at their mum's.,in public.,over dinner.,with a club.,with love.,with appreciation.,for being loyal.,for appreciating.,in a heartbeat.,for being a retard.,FOR SPARTA!,in front of their dog.,with their dog.", "," );
         victim = player.name;
         inflictor = self.name;
-        if ( self.permissions < player.permissions ) {
+        if ( self.pers["permissions"] < player.pers["permissions"] ) {
             victim = self.name;
             inflictor = player.name;
         }
@@ -524,6 +520,37 @@ vip_poke( tok ) {
 vip_rainbow ( tok ) {
     colorMsg = colorMsg( tok );
     self privateMsg( colorMsg, self, "" );
+}
+
+vip_suffix ( tok ) {
+    if ( tok == "" ) {
+        if ( self.pers["suffix"] == "" ) {
+            cvar = level.permissions[ self.pers["permissions"] ].name + "Suffix";
+            self.pers["suffix"] = getCvar( cvar );
+            self playerMsg( "Suffix has been toggled to default!" );
+            return;
+        }
+        
+        self.pers["suffix"] = "";
+        self playerMsg( "Suffix has been toggled off!" );
+        return;
+    }
+
+    if ( tok == "reset" ) {
+        cvar = level.permissions[ self.pers["permissions"] ].name + "Suffix";
+        self.pers["suffix"] = getCvar( cvar );
+        self playerMsg( "Suffix has been reset to default!" );
+        return;
+    }
+    
+    // todo: update suffix for duplicate ips
+    self.pers["suffix"] = "[" + tok + "^7]";
+    suffix = getCvar( "customSuffix" );
+    newCvar = suffix + " " + self getIP() + ";" + self.pers["suffix"];
+
+    if ( suffix == "" )
+        newCvar = self getIP() + ";" + tok;
+    setCvar( "customSuffix", newCvar );
 }
 
 colorMsg ( msg ) {

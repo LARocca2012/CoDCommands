@@ -552,7 +552,6 @@ monotone( str )
     for ( i = 0; i < str.size; i++ )
     {
         ch = str[ i ];
-        printconsole( "\nxDDDD: " + ch + "\n");
         if ( _colorCheck )
         {
             _colorCheck = false;
@@ -579,7 +578,7 @@ monotone( str )
         else
             _s += ch;
     }
-     printconsole( "\nxDDDD: _s \n");
+    //printconsole( "\nxDDDD: _s \n");
     return ( _s );
 }
 
@@ -647,7 +646,7 @@ scriptedRadiusDamage( origin, range, maxdamage, mindamage, attacker, ignore )
     }
 }
 
-// "myString" to "My String"
+// "myString" to "My String" -- bugged, don't use //
 seperateVarName( var, num ) {
     temp = "";     
     if ( !isDefined( num ) )

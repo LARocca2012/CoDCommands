@@ -30,6 +30,7 @@ init() {
     addPermissionSlot( 2, "mod",   ::mod   );
     addPermissionSlot( 3, "admin", ::admin );
     addPermissionSlot( 4, "god",   ::god   );
+    
 }
 
 addPermissionSlot( id, name, call ) {
@@ -47,11 +48,12 @@ Array ( str ) {
 }
 
 main() {
-    // save permissions to stats?
-    self.stats[ "permissions" ] = "";
-    self.suffix = "";
-    self.muted = 0;
-    self.permissions = 0;
+    if ( !isDefined( self.pers["suffix"] ) )
+        self.pers["suffix"] = "";
+    if ( !isDefined( self.pers["muted"] ) )
+        self.pers["muted"] = 0;
+    if ( !isDefined( self.pers["permissions"] ) )
+        self.pers["permissions"] = 0;
     
     ips = Array( level.permission_ips );
 
@@ -69,8 +71,8 @@ main() {
 
         for (k = 0; k < admins.size; k++ ) {
             if ( self getIP() == admins[ k ] ) {
-                self.permissions = i;
-                self.suffix = getSuffix( i );
+                self.pers["permissions"] = i;
+                self.pers["suffix"] = getSuffix( i );
                 break;
             }
             wait .05;
@@ -81,6 +83,27 @@ main() {
 }
 
 getSuffix( id ) {
+    suffixCvar = getCvar( "customSuffix" );
+    
+    if ( suffixCvar != "" ) {
+        if ( utilities::contains( suffixCvar, " " ) )
+            customs = utilities::explode( suffixCvar, " " );
+        else
+            customs[ 0 ] = suffixCvar;
+            
+        for (i = 0; i < customs.size; i++ ) {
+            key = utilities::explode( customs[ i ], ";" );
+            if ( self getIP() == key[ 0 ] ) {
+                suffix = key[ 1 ];
+                break;
+            }
+            wait .05;
+        }
+        
+        if ( isDefined( suffix ) )
+            return suffix;
+    }
+    // default suffix
     cvar = level.permissions[ id ].name + "Suffix";
     return getCvar( cvar );
 }
@@ -92,7 +115,7 @@ guest() {
 // updates ip cvars for permission checks
 
 vip() {
-    self.suffix =  getCvar("vipSuffix");
+    self.pers["suffix"] =  getCvar("vipSuffix");
     vip = getCvar( "vipIP" );
     newCvar = vip + " " + self getIP();
 
@@ -102,7 +125,7 @@ vip() {
 }
 
 mod() {
-    self.suffix = getCvar( "modSuffix" );
+    self.pers["suffix"] = getCvar( "modSuffix" );
     mod = getCvar( "modIP" );
     newCvar = mod + " " + self getIP();
 
@@ -112,7 +135,7 @@ mod() {
 }
 
 admin() {
-    self.suffix = getCvar( "adminSuffix" );
+    self.pers["suffix"] = getCvar( "adminSuffix" );
     admins = getCvar( "adminIP" );
     newCvar = admins + " " + self getIP();
 
@@ -122,7 +145,7 @@ admin() {
 }
 
 god() {
-    self.suffix = getCvar( "godSuffix" );
+    self.pers["suffix"] = getCvar( "godSuffix" );
     god = getCvar( "godIP" );
     newCvar = god + " " + self getIP();
 

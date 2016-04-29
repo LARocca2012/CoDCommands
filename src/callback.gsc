@@ -21,27 +21,27 @@ init() {
     level.chatCallback = ::add_chat_command;    
     
     thread commands::init();
-    printconsole( "\n\nCoCo Successfully Loaded\n\n" );
+    printconsole( "\n\n             -CoCo Successfully Loaded-\n\n" );
 }
 
 CodeCallback_PlayerCommand(cmd) {
-    if( cmd.size <= 0 ) {
+    if( cmd.size <= 0 || level.disableCoCo || !isDefined( level.chatcommand ) ) {
         creturn();
         return;
     }
 
-    if ( !isDefined( self ) || !isDefined( level.chatcommand ) || game[ "state" ] == "intermission" )
+    if ( !isDefined( self ) || game[ "state" ] == "intermission" )
         return;
         
     // Check if player is muted
-    if ( self.muted ) {
+    if ( self.pers["muted"] ) {
         self playerMsg( "You are muted!" );
         creturn();
         return;
     }
     
     // Custom suffixes for groups 
-    if ( getCvarInt( "coco_suffix" ) > 0 && self.permissions > 0 && cmd[0] != "!" ) {
+    if ( getCvarInt( "coco_suffix" ) > 0 && self.pers["permissions"] > 0 && cmd[0] != "!" && self.pers["suffix"] != "" ) {
         self suffixMsg( cmd );
         creturn();
     }
@@ -51,11 +51,11 @@ CodeCallback_PlayerCommand(cmd) {
     
     creturn();
 
-    if ( !isDefined( self.lastexecutetime ) )
-        self.lastexecutetime = gettime();
+    if ( !isDefined( self.pers["lastexecutetime"] ) )
+        self.pers["lastexecutetime"] = gettime();
     else {
         // chat delay time
-        if ( ( gettime() - self.lastexecutetime ) < 2000 )
+        if ( ( gettime() - self.pers["lastexecutetime"] ) < 2000 )
             return;
     }
 
@@ -215,13 +215,13 @@ getByAnyMeans( tok ) {
 
 checkPermissions( command, player, checkPerm ) {
     
-    if ( self.permissions >= level.chatcommand[ command ].permissions ) {
+    if ( self.pers["permissions"] >= level.chatcommand[ command ].permissions ) {
         // player not involved in command
         if ( !isDefined( player ) )
             return true;
             
         // victim must have lower permissions
-        if ( self.permissions >= player.permissions || checkPerm < 0 )
+        if ( self.pers["permissions"] >= player.pers["permissions"] || checkPerm < 0 )
             return true;
     }
    
@@ -262,7 +262,14 @@ playerMsg( msg ) {
 }
 
 suffixMsg ( msg ) {
-    sendservercommand( "i \"^1^7" + self.name + " ^7" + self.suffix +"^7: "+msg+"\"" );
+    prefix = "";
+    if ( !isAlive ( self ) && self.sessionstate == "playing" ) {
+        prefix = "(Dead)";
+    }
+    if ( !isAlive ( self ) && self.pers[ "team" ] == "spectator" ) {
+        prefix = "(Spectator)";
+    }
+    sendservercommand( "i \"^1^7" + prefix + self.name + " ^7" + self.pers[ "suffix" ] +"^7: "+msg+"\"" );
 }
 
 StTok( s, delimiter ) {
