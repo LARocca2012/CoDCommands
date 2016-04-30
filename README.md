@@ -69,6 +69,25 @@ Admin Commands
 - !rape
 - !restart
 - !map
+- !noclan
+- !swapteams
+- !swapclans
+- !axisclan
+- !alliedclan
+- !disarm
+- !matrix
+- !force
+- !forcespec
+- !burn
+- !explode
+- !mortar
+- !cow
+- !teamlock
+- !teamunlock
+- !matchsetup
+- !matchstart
+- !matchstop
+- !forcevote
 
 God Commands 
 - !resetlogins 
