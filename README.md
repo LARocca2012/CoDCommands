@@ -13,6 +13,7 @@ Update v2.2:
 - Added Custom/Default gametype support ( Non-CoDaM )
 - Tidied up some code
 - Added Cheese's permission flag system to Permissions.gsc
+- Added cvar for chat delay-> change how long before another command by same player is executed!
 
 Update v2.1:
 - Added !suffix <reset|custom> -> Toggle ( just !suffix ) or change your suffix ( only for Admins+ )
