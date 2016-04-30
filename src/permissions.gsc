@@ -16,20 +16,25 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* Modified for CoCo */
+/* Modified for CoCo- original from cheese */
+
 init() {
 
     level.permissions = [];
     
-    // cvar names increasing in permission levels
     level.permission_ips = "0 vipIP modIP adminIP godIP";
     level.permission_pws = "0 vipPassword modPassword adminPassword godPassword";
     
-    addPermissionSlot( 0, "guest", ::guest );
-    addPermissionSlot( 1, "vip",   ::vip   );
-    addPermissionSlot( 2, "mod",   ::mod   );
-    addPermissionSlot( 3, "admin", ::admin );
-    addPermissionSlot( 4, "god",   ::god   );
+    addPermissionSlot( 0, "guest"   , ::guest        );
+    addPermissionSlot( 1, "vip"     , ::groupAssign  );
+    addPermissionSlot( 2, "mod"     , ::groupAssign  );
+    addPermissionSlot( 3, "admin"   , ::groupAssign  );
+    addPermissionSlot( 4, "god"     , ::groupAssign  );
+    
+    // load custom gametype permissions flags if no CoDaM //
+    if ( getCvar( "coco_codam" ) == "" ) {
+        custom\permissions::init();
+    }
     
 }
 
@@ -43,17 +48,77 @@ addPermissionSlot( id, name, call ) {
     level.permissions[ id ] = p;
 }
 
+getPermissionSlot( id ) {
+    if ( !isDefined( level.permissions[ id ] ) )
+        return undefined;
+
+    return level.permissions[ id ];
+}
+
+addPermission( id, permission, value ) {
+    slot = getPermissionSlot( id );
+    if ( !isDefined( slot ) )
+        return;
+
+    i = slot.permissions.size;
+    p = spawnstruct();
+    p.name = permission;
+    p.value = value;
+
+    slot.permissions[ i ] = p;
+    level.permissions[ slot.id ] = slot;
+}
+
+getPermission( slot, permission ) {
+    if ( !isDefined( slot ) )
+        return undefined;
+
+    for ( i = 0; i < slot.permissions.size; i++ ) {
+        p = slot.permissions[ i ];
+
+        if ( p.name == permission )
+            return p;
+    }
+
+    return undefined;
+}
+
+hasPermission( permission ) {
+    slot = getPermissionSlot( self.stats[ "permissions" ] );
+    if ( !isDefined( slot ) )
+        return false;
+
+    if ( !hasPermissionAvailable( slot, permission ) )
+        return false;
+
+    p = getPermission( slot, permission );
+    if ( p.value )
+        return true;
+
+    return false;
+}
+
+hasPermissionAvailable( slot, permission ) {
+    if ( !isDefined( slot ) )
+        return false;
+
+    if ( isDefined( getPermission( slot, permission ) ) )
+        return true;
+
+    return false;
+}
+
 Array ( str ) {
     return utilities::explode( str, " " );
 }
 
 main() {
-    if ( !isDefined( self.pers["suffix"] ) )
-        self.pers["suffix"] = "";
-    if ( !isDefined( self.pers["muted"] ) )
+    if ( !isDefined( self.pers[ "suffix" ] ) )
+        self.pers[ "suffix" ] = "";
+    if ( !isDefined( self.pers[ "muted" ] ) )
         self.pers["muted"] = 0;
-    if ( !isDefined( self.pers["permissions"] ) )
-        self.pers["permissions"] = 0;
+    if ( !isDefined( self.pers[ "permissions" ] ) )
+        self.pers[ "permissions" ] = 0;
 
     ips = Array( level.permission_ips );
 
@@ -71,8 +136,8 @@ main() {
 
         for (k = 0; k < admins.size; k++ ) {
             if ( self getIP() == admins[ k ] ) {
-                self.pers["permissions"] = i;
-                self.pers["suffix"] = getSuffix( i );
+                self.pers[ "permissions" ] = i;
+                self.pers[ "suffix" ] = getSuffix( i );
                 break;
             }
             wait .05;
@@ -108,48 +173,18 @@ getSuffix( id ) {
     return getCvar( cvar );
 }
 
-guest() {
+guest( group ) {
 
 }
 
-// updates ip cvars for permission checks
-
-vip() {
-    self.pers["suffix"] =  getCvar("vipSuffix");
-    vip = getCvar( "vipIP" );
-    newCvar = vip + " " + self getIP();
-
-    if ( vip == "" )
-        newCvar = self getIP();
-    setCvar( "vipIP", newCvar );
-}
-
-mod() {
-    self.pers["suffix"] = getCvar( "modSuffix" );
-    mod = getCvar( "modIP" );
-    newCvar = mod + " " + self getIP();
-
-    if ( mod == "" )
-        newCvar = self getIP();
-    setCvar( "modIP", newCvar );
-}
-
-admin() {
-    self.pers["suffix"] = getCvar( "adminSuffix" );
-    admins = getCvar( "adminIP" );
-    newCvar = admins + " " + self getIP();
-
-    if ( admins == "" )
-        newCvar = self getIP();
-    setCvar("adminIP", newCvar);
-}
-
-god() {
-    self.pers["suffix"] = getCvar( "godSuffix" );
-    god = getCvar( "godIP" );
-    newCvar = god + " " + self getIP();
-
-    if ( god == "" )
-        newCvar = self getIP();
-    setCvar( "godIP", newCvar );
+groupAssign( group ) {
+    
+    self.pers[ "suffix" ] = getCvar( group + "Suffix" );
+    ips = getCvar( group + "Suffix" );
+    updateCvar = ips + " " + self getIP();
+    
+    if ( ips == "" )
+        updateCvar = self getIP();
+        
+    setCvar( (group + "IP"), updateCvar );
 }

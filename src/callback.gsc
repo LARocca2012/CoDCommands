@@ -21,7 +21,7 @@ init() {
     level.chatCallback = ::add_chat_command;    
     
     thread commands::init();
-    printconsole( "\n\n             -CoCo Successfully Loaded-\n\n" );
+    printconsole( "\n             -CoCo Successfully Loaded-\n\n" );
 }
 
 CodeCallback_PlayerCommand(cmd) {
@@ -34,14 +34,14 @@ CodeCallback_PlayerCommand(cmd) {
         return;
         
     // Check if player is muted
-    if ( self.pers["muted"] ) {
+    if ( self.pers[ "muted" ] ) {
         self playerMsg( "You are muted!" );
         creturn();
         return;
     }
     
     // Custom suffixes for groups 
-    if ( getCvarInt( "coco_suffix" ) > 0 && self.pers["permissions"] > 0 && cmd[0] != "!" && self.pers["suffix"] != "" ) {
+    if ( getCvarInt( "coco_suffix" ) > 0 && self.pers[ "permissions" ] > 0 && cmd[0] != "!" && self.pers[ "suffix" ] != "" ) {
         self suffixMsg( cmd );
         creturn();
     }
@@ -51,16 +51,17 @@ CodeCallback_PlayerCommand(cmd) {
     
     creturn();
 
-    if ( !isDefined( self.pers["lastexecutetime"] ) )
-        self.pers["lastexecutetime"] = gettime();
-    else {
+    if ( !isDefined( self.pers[ "lastexecutetime" ] ) )
+        self.pers[ "lastexecutetime" ] = gettime();
+    else if ( getCvarInt( "coco_chatdelay" ) > 0 ) {
         // chat delay time
-        if ( ( gettime() - self.pers["lastexecutetime"] ) < 2000 )
+        chatdelay = getCvarFloat( "coco_chatdelay" ) * 1000;
+        if ( ( gettime() - self.pers[ "lastexecutetime" ] ) < chatdelay )
             return;
     }
 
     arg = strip ( cmd );
-    chatcmd = StTok( cmd, " " ); //splits the spaces as seperate arguments
+    chatcmd = StTok( arg, " " ); //splits the spaces as seperate arguments
             
     if ( isDefined( level.chatcommand[ chatcmd[ 0 ] ] ) ) {
         if ( level.chatcommand[ chatcmd[ 0 ] ].permissions && !self checkPermissions( chatcmd[ 0 ] ) ) {
@@ -71,6 +72,11 @@ CodeCallback_PlayerCommand(cmd) {
         id = undefined;
         if ( level.chatcommand[ chatcmd[ 0 ] ].idrequired )
         {
+            if ( !isDefined( chatcmd[ 1 ] ) ) {
+                self playerMsg( "Check command usage... Player must be given!" );
+                self.pers[ "lastexecutetime" ] = gettime();
+                return;
+            }
             id = self getByAnyMeans( chatcmd[ 1 ] );
 
             if ( !isDefined( id ) )
@@ -97,12 +103,20 @@ CodeCallback_PlayerCommand(cmd) {
         
         tok = combineChatCommand ( chatcmd, " ", id );
         command = chatcmd[ 0 ];
-        //printconsole("\ncommand arg is:" + command + "tok is: " + tok + "\n"); 
+        
+        
+        // check for codam command -> transfers to codam command parser
+        if ( level.chatcommand[ command ].ignoreself < 0 ) {
+            self [[ level.chatcommand[ command ].call ]]( tok, command );
+            return;
+        }
+        
         self [[ level.chatcommand[ command ].call ]]( tok );
-        self.lastexecutetime = gettime();
+        self.pers[ "lastexecutetime" ] = gettime();
+        
     }
     else
-        self playerMsg( "^3Command not found: ^7" + chatcmd[ 0 ] + " " + combineChatCommand( chatcmd, " " ));
+        self playerMsg( level.cocoColor + "Command not found: ^7" + chatcmd[ 0 ] + " " + combineChatCommand( chatcmd, " " ));
 }
 
 // original by php
@@ -215,13 +229,13 @@ getByAnyMeans( tok ) {
 
 checkPermissions( command, player, checkPerm ) {
     
-    if ( self.pers["permissions"] >= level.chatcommand[ command ].permissions ) {
+    if ( self.pers[ "permissions" ] >= level.chatcommand[ command ].permissions ) {
         // player not involved in command
         if ( !isDefined( player ) )
             return true;
             
         // victim must have lower permissions
-        if ( self.pers["permissions"] >= player.pers["permissions"] || checkPerm < 0 )
+        if ( self.pers[ "permissions" ] >= player.pers[ "permissions" ] || checkPerm < 0 )
             return true;
     }
    
@@ -258,7 +272,7 @@ getPlayerById( id ) {
 }
 
 playerMsg( msg ) {
-    self sendservercommand( "i \"^7[CoCo]: ^3"+msg+"\"" );
+    self sendservercommand( "i \"^1^7" + level.cocoBot + ": " + level.cocoColor + msg+"\"" );
 }
 
 suffixMsg ( msg ) {
