@@ -23,7 +23,9 @@ init() {
     level.permissions = [];
     
     level.permission_ips = "0 vipIP modIP adminIP godIP";
-    level.permission_pws = "0 vipPassword modPassword adminPassword godPassword";
+    if ( level.cocoLogin == "group" )
+        level.permission_pws = "0 vipPassword modPassword adminPassword godPassword";
+    else level.permission_pws = "0 vipLogins modLogins adminLogins godLogins";
     
     addPermissionSlot( 0, "guest"   , ::guest        );
     addPermissionSlot( 1, "vip"     , ::groupAssign  );
@@ -165,6 +167,10 @@ getSuffix( id ) {
             wait .05;
         }
         
+        // check if suffix is set to default
+        if ( suffix == "default" )
+            suffix = "";
+            
         if ( isDefined( suffix ) )
             return suffix;
     }

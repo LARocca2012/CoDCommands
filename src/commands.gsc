@@ -19,19 +19,25 @@
 init() {
     if ( getCvar( "availablemaps" ) == "" )
         setCvar( "availablemaps", "mp_brecourt mp_harbor mp_carentan mp_depot mp_dawnville mp_railyard mp_powcamp mp_pavlov mp_rocket mp_hurtgen mp_ship mp_chateau" );
-        
+
+    level.chatcommand = [];
+    level.helpcommand = [];
+    
     // bot setup
     level.cocoBot = getCvar( "coco_botname" );
     level.cocoColor = getCvar( "coco_messagecolor" );
     if ( level.cocoColor == "" )
         level.cocoColor = "^3";
-     
+    level.cocoLogin = "group";
+    if ( getCvar( "coco_logintype" ) == "user" )
+        level.cocoLogin = "user";
+        
     // Permisions:
     // 0 = Guest 1 = VIP 2 = Moderator 3 = Admin 4 = God 
 
     // Arguments: <cmd> , <call> , <permissions> , <info> , <id-requirement[1]>, <ignore-self [1] | codam-command [-1]> 
     // Guest Commands //
-    thread [[ level.chatCallback ]] ( "!login"         ,   ::chatcmd_login          , 0 ,  "Access admin commands: !login [password]"          , 0      );
+    thread [[ level.chatCallback ]] ( "!login"         ,   ::chatcmd_login          , 0 ,  "Access admin commands: !help login"                , 0      );
     thread [[ level.chatCallback ]] ( "!ebot"          ,   ::chatcmd_ebot           , 0 ,  "Trigger e^2BOT ^7commands: !eBOT [command]"        , 0      );
     thread [[ level.chatCallback ]] ( "!help"          ,   ::chatcmd_help           , 0 ,  "List of commands: !help <cmd>"                     , 0      );
     thread [[ level.chatCallback ]] ( "!alias"         ,   ::chatcmd_alias          , 0 ,  "List of aliases: !alias <cmd>"                     , 0      );
@@ -50,7 +56,6 @@ init() {
     thread [[ level.chatCallback ]] ( "!mute"          ,   ::chatcmd_mute           , 2 ,  "Mute a player: !mute [player]"                     , 1 , 1  );
     thread [[ level.chatCallback ]] ( "!unmute"        ,   ::chatcmd_unmute         , 2 ,  "Unmute a muted player: !unmute [player]"           , 1 , 1  );
     thread [[ level.chatCallback ]] ( "!warn"          ,   ::chatcmd_warn           , 2 ,  "Warn a player: !warn [player] <msg>"               , 1 , 1  );
-    thread [[ level.chatCallback ]] ( "!spectate"      ,   ::spectate_player        , 2 ,  "Spectate player: !spectate [player]"               , 1 , 1  );
     
     // Admin Commands //
     thread [[ level.chatCallback ]] ( "!say"           ,   ::chatcmd_rconsay        , 3 ,  "Talk as console: !say [msg]"                       , 0      );
@@ -76,6 +81,7 @@ init() {
     
     // CoDaM Commands
     if ( getCvar( "coco_codam" ) != "" ) {
+    thread [[ level.chatCallback ]] ( "!spectate"      ,   ::spectate_player        , 2 ,  "Spectate player: !spectate [player]"               , 1 , 1  );
     
     thread [[ level.chatCallback ]] ( "!noclan"        ,   ::chatcmd_codam          , 3 ,  "Move non-clan players to team: !noclan [team]"     , 0 , -1 );
     thread [[ level.chatCallback ]] ( "!swapteams"     ,   ::chatcmd_codam          , 3 ,  "Swap teams: !swapteams"                            , 0 , -1 );
@@ -108,6 +114,9 @@ init() {
     thread [[ level.chatCallback ]] ( "!resetplayer"   ,   ::chatcmd_resetplayer    , 4 ,   "Clear player permissions: !resetplayer [player]"  , 1      );
     thread [[ level.chatCallback ]] ( "!resetgroup"    ,   ::chatcmd_resetgroup     , 4 ,   "Clear group logins: !resetgroup [group]"          , 0      );
     
+    // load custom commands
+    custom\commands::commands();
+    
     // Aliases // 
     addAlias( "!login"        , "!log"     );
     addAlias( "!help"         , "!? !h"    );
@@ -135,6 +144,9 @@ init() {
     addAlias( "!resetlogins"  , "!rlog"    );
     addAlias( "!resetplayer"  , "!rpl"     );
     addAlias( "!resetgroup"   , "!rgr"     );
+    
+    // load custom aliases
+    thread custom\commands::aliases();
 }
 
 addAlias( command, alias ) {
@@ -155,7 +167,7 @@ getCommandID( command ) {
     id = 0;
     //printconsole( "\nlevel.helpcommand.size = " + level.helpcommand.size + "\n" );
     for ( i = 0; i < level.helpcommand.size; i++ ) {
-        if ( isDefined ( level.helpcommand[ i ].cmd ) && command == level.helpcommand[ i ].cmd ) {
+        if ( isDefined ( level.helpcommand[ i ].command ) && command == level.helpcommand[ i ].command ) {
             id = i;
             break;
         }
@@ -210,7 +222,7 @@ chatcmd_help ( tok ) {
         }
         
         if ( isDefined( level.helpcommand[ i ] ) )
-            linemsg += level.helpcommand[ i ].cmd + "  ";
+            linemsg += level.helpcommand[ i ].command + "  ";
         
         num ++;
         wait .05;
@@ -221,14 +233,16 @@ chatcmd_help ( tok ) {
 }
 
 chatcmd_ebot( tok ) {
-    cmd = "eBOT " + tok;
-    self setClientCvar( "name" , cmd );
+    command = "eBOT " + tok;
+    self setClientCvar( "name" , command );
 }
 
 chatcmd_login( tok ) {
     tok = callback::strip( tok );
     if ( tok == "" ) {
-        self playerMsg( "Please enter a password: !login [password]" );
+        if ( level.cocoLogin == "group" )
+            self playerMsg( "Please enter a password: !login [password]" );
+        else self playerMsg( "Please enter a password: !login [user] [password]" );
         return;
     }
    
@@ -238,16 +252,56 @@ chatcmd_login( tok ) {
     login = false;
     //if ( isDefined ( self.pers[ "permissions" ] ) )
     //    self playerMsg( "Already Logged In!" );
-    for ( i = 1; i < passwords.size; i++ ) {
-        //printconsole( "\n" + passwords[i] + ": " + getCvar ( passwords[ i ] ) + "\n" );
-        if ( getCvar( passwords[i] ) != "" && tok == getCvar( passwords[i] ) ) {
-            if ( isDefined ( level.permissions ) )
-                self [[ level.permissions[ i ].call ]]( level.permissions[ i ].name );
-            self.pers[ "permissions" ] = i;
-            login = true;
-            self playerMsg( "Logged in sucessfully as " + level.permissions[ i ].name + "!" );
-            break;
+    if ( level.cocoLogin == "group" ) {
+        for ( i = 1; i < passwords.size; i++ ) {
+            //printconsole( "\n" + passwords[i] + ": " + getCvar ( passwords[ i ] ) + "\n" );
+            if ( getCvar( passwords[ i ] ) != "" && tok == getCvar( passwords[ i ] ) ) {
+                if ( isDefined ( level.permissions ) )
+                    self [[ level.permissions[ i ].call ]]( level.permissions[ i ].name );
+                self.pers[ "permissions" ] = i;
+                login = true;
+                self playerMsg( "Logged in sucessfully as " + level.permissions[ i ].name + "!" );
+                break;
+            }
         }
+    } else {
+        // break up user input
+        userArgs = StTok( tok, " " );
+        if ( userArgs.size < 2 ) {
+            self playerMsg( "Login Unsuccessful! Invalid arguments, please check !help login" );
+            return;
+        }
+        
+        // check all groups
+        for ( i = 1; i < passwords.size; i++ ) {
+            // load cvar
+            cvar = getCvar( passwords[ i ] );
+            if ( cvar == "" )
+                continue;
+                
+            // break it up into seperate logins
+            logins = StTok( cvar, " " );
+            for ( k = 0; k < logins.size; k++ ) {
+                // split into user and pw
+                args = StTok( logins[ k ], ":" );
+                
+                // check args size
+                if ( args.size < 2 ) {
+                    self playerMsg( "Login Unsuccessful! Users are not setup correctly!" );
+                    return;
+                }
+                
+                // compare to input
+                if ( args[ 0 ] == userArgs[ 0 ] && args[ 1 ] == userArgs[ 1 ] ) {
+                    if ( isDefined ( level.permissions ) )
+                        self [[ level.permissions[ i ].call ]]( level.permissions[ i ].name );
+                    self.pers[ "permissions" ] = i;
+                    login = true;
+                    self playerMsg( "Logged in sucessfully as " + level.permissions[ i ].name + "!" );
+                    break;
+                }
+            }
+       }
     }
 
     if ( !login )
@@ -302,7 +356,7 @@ chatcmd_alias ( tok ) {
         }
         
         if ( isDefined( level.helpcommand[ i ]) )
-            linemsg += level.cocoColor + level.helpcommand[ i ].cmd + ":^7" + level.helpcommand[ i ].alias + " ";
+            linemsg += level.cocoColor + level.helpcommand[ i ].command + ":^7" + level.helpcommand[ i ].alias + " ";
         
         num ++;
         wait .05;
@@ -342,6 +396,7 @@ chatcmd_mute ( tok ) {
     player = getPlayerById( tok );
     if ( isDefined ( player ) && player != self ) {
         player.pers[ "muted" ] = true;
+        self playerMsg( "You have muted " + player.name );
         player playerMsg( "You have been muted by " + self.name );
     }
 }
@@ -350,6 +405,7 @@ chatcmd_unmute ( tok ) {
     player = getPlayerById( tok );
     if ( isDefined ( player ) && player.muted ) {
         player.pers[ "muted" ] = false;
+        self playerMsg( "You have unmuted " + player.name );
         player playerMsg( "You have been unmuted by " + self.name );
     }
 }
@@ -517,9 +573,9 @@ switch_map( tok ) {
 spectate_player( tok ) {
     player = getPlayerById( tok );
     if ( isDefined ( player ) && player.sessionstate == "playing" && player != self ) {
-        self.specplayer = player getEntityNumber();
+        self.spectatorclient = player getEntityNumber();
         wait 0.05;
-        self [[ level.callbackSpawnSpectator ]]();
+        self [[ level.gtd_call ]]( "goSpectate"	);
     }
 }
 
@@ -577,7 +633,7 @@ vip_suffix ( tok ) {
     // remove dupe ips and reset to default
     self clearSuffix();
     
-    if ( tok == "" ) {
+    if ( tok == "" || tok == "default") {
         if ( self.pers[ "suffix" ] == "" ) {
             cvar = level.permissions[ self.pers[ "permissions" ] ].name + "Suffix";
             self.pers["suffix"] = getCvar( cvar );
@@ -586,8 +642,8 @@ vip_suffix ( tok ) {
         }
         
         self.pers[ "suffix" ] = "";
+        tok = "default";
         self playerMsg( "Suffix has been toggled off!" );
-        return;
     }
 
     if ( tok == "reset" ) {
@@ -597,7 +653,7 @@ vip_suffix ( tok ) {
         return;
     }
     
-    // clean input
+    // clean input- remove spaces and ;
     temp = "";
     for ( i = 0; i < tok.size; i++ ) {
         if ( tok[ i ] != " " && tok[ i ] != ";" )
@@ -606,9 +662,10 @@ vip_suffix ( tok ) {
     tok = temp;
     
     wait .05;
-    
-    self playerMsg( "Suffix has been changed to: ^7" + tok );
-    self.pers[ "suffix" ] = "[" + tok + "^7]";
+    if ( tok != "default" ) {
+        self playerMsg( "Suffix has been changed to: ^7" + tok );
+        self.pers[ "suffix" ] = "[" + tok + "^7]";
+    }
     suffix = getCvar( "customSuffix" );
     newCvar = suffix + " " + self getIP() + ";" + self.pers[ "suffix" ];
 

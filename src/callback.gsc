@@ -24,15 +24,17 @@ init() {
     printconsole( "\n             -CoCo Successfully Loaded-\n\n" );
 }
 
-CodeCallback_PlayerCommand(cmd) {
-    if( cmd.size <= 0 || isDefined( level.disableCoCo ) || !isDefined( level.chatcommand ) ) {
+CodeCallback_PlayerCommand( cmd ) {
+    if( cmd.size <= 0 ) {
         creturn();
         return;
     }
-
-    if ( !isDefined( self ) || game[ "state" ] == "intermission" )
+    
+    // strip whitespace before checking for !
+    cmd = strip( cmd );
+    if ( isDefined( level.disableCoCo ) || !isDefined( level.chatcommand ) )
         return;
-        
+    
     // Check if player is muted
     if ( self.pers[ "muted" ] ) {
         self playerMsg( "You are muted!" );
@@ -120,50 +122,40 @@ CodeCallback_PlayerCommand(cmd) {
 }
 
 // original by php
-add_chat_command( cmd, call, permissions, info, idrequired, ignoreself ) {
-
+add_chat_command( command, call, defaultpermission, info, idrequired, ignoreself ) {
+    if ( !isDefined( command ) || !isDefined( call ) )
+        return;
+        
     if ( !isDefined( level.chatcommand ) )
         level.chatcommand = [];
-        
+
     if ( !isDefined( level.helpcommand ) )
         level.helpcommand = [];
-        
+
     if ( !isDefined( info ) )
-        info = "Info for command: " + cmd + " not found";
+        info = "Info for command: " + command + " not found";
         
     if ( !isDefined( ignoreself ) )
         ignoreself = 0;
         
+    // check if command is disabled
+    if ( disableCommand( command ) )
+        return;
+        
+    permissions = getCommandPermission( command, defaultpermission );
+    
     level.helpcommand[ level.chatcommand.size ] = spawnstruct();
-    level.helpcommand[ level.chatcommand.size ].cmd = cmd;
+    level.helpcommand[ level.chatcommand.size ].command = command;
     level.helpcommand[ level.chatcommand.size ].info = info;
     level.helpcommand[ level.chatcommand.size ].permissions = permissions;
     
-    level.chatcommand[ cmd ] = spawnstruct();
-    level.chatcommand[ cmd ].call = call;
-    level.chatcommand[ cmd ].id = level.chatcommand.size;
-    level.chatcommand[ cmd ].permissions = permissions;
-    level.chatcommand[ cmd ].info = info;
-    level.chatcommand[ cmd ].idrequired = idrequired;
-    level.chatcommand[ cmd ].ignoreself = ignoreself;
-}
-
-// modified to not recognize names with numbers in them as id
-atoi_mod( tok ) {
-    // make sure tok <= 2 digits
-    if ( tok.size > 2 )
-        return undefined;
-    
-    tokString = utilities::strreplacer( tok, "lower" );
-    tokID = utilities::atoi( tok );
-    if ( !isDefined ( tokID ) )
-        return undefined;
-
-    tokCompare = tokID + "";
-    if ( tokCompare != tokString )
-        return undefined;
-
-    return tokID;
+    level.chatcommand[ command ] = spawnstruct();
+    level.chatcommand[ command ].call = call;
+    level.chatcommand[ command ].id = level.chatcommand.size;
+    level.chatcommand[ command ].permissions = permissions;
+    level.chatcommand[ command ].info = info;
+    level.chatcommand[ command ].idrequired = idrequired;
+    level.chatcommand[ command ].ignoreself = ignoreself;
 }
 
 getByAnyMeans( tok ) {
@@ -227,6 +219,29 @@ getByAnyMeans( tok ) {
     return undefined;
 }
 
+getCommandPermission( command, defaultpermission ) {
+    permission = defaultpermission;
+    
+    // remove "!"
+    shortcommand = commands::strFrom( command, 1, command.size );
+    
+    // if permission cvar set, return custom permission
+    if ( getCvar( "coco_permission_" + shortcommand ) != "" ) {
+        permission = getCvarInt( "coco_permission_" + shortcommand );
+    }
+    
+    return permission;
+}
+
+disableCommand( command ) {
+    // remove "!"
+    shortcommand = commands::strFrom( command, 1, command.size );
+    
+    if ( getCvarInt( "coco_disable_" + shortcommand ) == 1 )
+        return true;
+    return false;
+}
+
 checkPermissions( command, player, checkPerm ) {
     
     if ( self.pers[ "permissions" ] >= level.chatcommand[ command ].permissions ) {
@@ -258,7 +273,23 @@ combineChatCommand ( str, delim, id ) {
     return strip(temp);
 }
 
+// modified to not recognize names with numbers in them as id
+atoi_mod( tok ) {
+    // make sure tok <= 2 digits
+    if ( tok.size > 2 )
+        return undefined;
+    
+    tokString = utilities::strreplacer( tok, "lower" );
+    tokID = utilities::atoi( tok );
+    if ( !isDefined ( tokID ) )
+        return undefined;
 
+    tokCompare = tokID + "";
+    if ( tokCompare != tokString )
+        return undefined;
+
+    return tokID;
+}
 
 clean_string ( str ) {
     // fuck codextended's tolower -> crashes sometimes
