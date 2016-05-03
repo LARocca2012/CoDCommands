@@ -76,6 +76,10 @@ _CoCo_ provides in-game commands to servers with a way to execute commands throu
 6. Run server- distribute appropriate passwords to group members
 7. Groups and Members can now login with !login
 
+## To-Do
+- Stats
+- Banning
+
 ## Contact
 All questions should be directed to the forum thread
 					                OR
