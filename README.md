@@ -151,4 +151,4 @@ Contact me on Steam: http://steamcommunity.com/id/indyanz/
 - !resetgroup 
 
 ## Credits
-Credit to php (http://cod1.eu) for the original CoDExtended and cheese (Steam: thecheeseman999) for his admin commands ;)
+Credit to php (http://cod1.eu) for the stable CoDExtended version and cheese (Steam: thecheeseman999) for his admin commands ;)
