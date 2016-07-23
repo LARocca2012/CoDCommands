@@ -119,6 +119,9 @@ CodeCallback_PlayerCommand( cmd ) {
     }
     else
         self playerMsg( level.cocoColor + "Command not found: ^7" + chatcmd[ 0 ] + " " + combineChatCommand( chatcmd, " " ));
+    //For logs. :D
+	printconsole("say;" + self.name+";"+chatcmd[ 0 ]+" "+ combineChatCommand( chatcmd, " " )+"\n");
+    logPrint("say; " + self.name + "; "+chatcmd[ 0 ]+" "+ combineChatCommand( chatcmd, " " )+"\n");
 }
 
 // original by php
